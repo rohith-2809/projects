@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minimum Support Price Calculator</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-image: url('m.s.p.jpg'); /* Set background image */
+            background-size: cover;
+            background-position: center;
+            color: #0f0e0e; /* Dark gray text */
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        .container {
+            background-color: rgba(255, 255, 255, 0.8); /* Semi-transparent white background */
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        .form-group {
+            position: relative;
+            margin-bottom: 1.5rem;
+        }
+        .form-group label {
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+        .form-group input:focus + label,
+        .form-group select:focus + label {
+            color: #4CAF50; /* Green color on focus */
+        }
+        .form-control {
+            border-radius: 4px;
+            border: 1px solid #ced4da; /* Gray border */
+            padding: 10px;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+        .form-control:focus {
+            border-color: #4CAF50; /* Green border on focus */
+            box-shadow: 0 0 0 0.2rem rgba(76, 175, 80, 0.25); /* Green shadow on focus */
+        }
+        .form-group:focus-within label {
+            color: #4CAF50; /* Green color on focus */
+        }
+        .form-control:hover {
+            border-color: #80C98B; /* Light green border on hover */
+        }
+        .btn-calculate {
+            padding: 10px 20px;
+            background-color: #4CAF50; /* Green button */
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        .btn-calculate:hover {
+            background-color: #45a049; /* Darker green on hover */
+        }
+        .card {
+            border: none;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .card-title {
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .card-text {
+            font-size: 1.1rem;
+            color: #555;
+        }
+        @media (max-width: 576px) {
+            .container {
+                margin: 0;
+            }
+        }
+        /* Success message animation */
+        .text-success {
+            animation: fadeOut 2s forwards;
+        }
+        @keyframes fadeOut {
+            from {
+                opacity: 1;
+            }
+            to {
+                opacity: 0;
+            }
+        }
+        /* Add animation to dropdown options */
+        .dropdown-option {
+            animation: fadeIn 0.5s ease forwards;
+            opacity: 0;
+        }
+        @keyframes fadeIn {
+            to {
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1 class="mb-4">Minimum Support Price Calculator</h1>
+    <div class="row">
+        <div class="col-md-12">
+            <form id="mspForm">
+                <div class="form-group">
+                    <label for="cropCategory">Crop Category:</label>
+                    <select class="form-control" id="cropCategory" required>
+                        <option value="">Select crop category</option>
+                        <option value="cereals">Cereals</option>
+                        <option value="pulses">Pulses</option>
+                        <option value="oilseeds">Oilseeds</option>
+                        <option value="others">Others</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="cropName">Crop Name:</label>
+                    <select class="form-control" id="cropName" required disabled>
+                        <option value="">Select crop name</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="cost">Cost (in Rupees):</label>
+                    <input type="number" class="form-control" id="cost" placeholder="Enter cost" required>
+                    <div id="costError" class="text-danger"></div>
+                </div>
+                <div class="form-group">
+                    <label for="yield">Yield Factor (in kgs):</label>
+                    <input type="number" class="form-control" id="yield" placeholder="Enter yield factor" required>
+                    <div id="yieldError" class="text-danger"></div>
+                </div>
+                <div class="form-group">
+                    <label for="premium">Premium (%):</label>
+                    <input type="number" class="form-control" id="premium" placeholder="Enter premium" value="5" required>
+                    <div id="premiumError" class="text-danger"></div>
+                </div>
+                <div class="text-center">
+                    <button type="button" class="btn btn-calculate" onclick="calculateMSP()">Calculate MSP</button>
+                    <button type="reset" class="btn btn-secondary ml-2">Reset</button>
+                </div>
+            </form>
+            <div id="errorMessage" class="text-danger mt-2"></div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-6 offset-md-3">
+            <div class="card mt-4">
+                <div class="card-body">
+                    <h5 class="card-title">Minimum Support Price (MSP) in Rupees:</h5>
+                    <p class="card-text" id="mspResult">-</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Bootstrap JS (optional) -->
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+<script>
+    // Define crop names for each category along with their seasons
+    var cropData = {
+        cereals: [
+            { name: 'paddy', season: 'Kharif' },
+            { name: 'wheat', season: 'Rabi' },
+            { name: 'barley', season: 'Rabi' },
+            { name: 'jowar', season: 'Kharif' },
+            { name: 'bajra', season: 'Kharif' },
+            { name: 'maize', season: 'Kharif' },
+            { name: 'ragi', season: 'Kharif' }
+        ],
+        pulses: [
+            { name: 'gram', season: 'Rabi' },
+            { name: 'arhar/tur', season: 'Kharif' },
+            { name: 'moong', season: 'Kharif' },
+            { name: 'urad', season: 'Kharif' },
+            { name: 'lentil', season: 'Rabi' }
+        ],
+        oilseeds: [
+            { name: 'groundnut', season: 'Kharif' },
+            { name: 'rapeseed/mustard', season: 'Rabi' },
+            { name: 'toria', season: 'Rabi' },
+            { name: 'soyabean', season: 'Kharif' },
+            { name: 'sunflower seed', season: 'Kharif' },
+            { name: 'sesamum', season: 'Kharif' },
+            { name: 'safflower seed', season: 'Rabi' },
+            { name: 'nigerseed', season: 'Kharif' }
+        ],
+        others: [
+            { name: 'Raw cotton', season: 'Kharif' },
+            { name: 'Raw jute', season: 'Rabi' },
+            { name: 'Copra', season: 'Rabi' },
+            { name: 'De-husked coconut', season: 'Kharif' },
+            { name: 'Sugarcane (Fair and remunerative price)', season: 'Kharif' },
+            { name: 'Virginia flu cured (VFC) tobacco', season: 'Kharif' }
+        ]
+    };
+
+    // Function to populate crop names based on selected category
+    document.getElementById('cropCategory').addEventListener('change', function() {
+        var category = this.value;
+        var cropNameDropdown = document.getElementById('cropName');
+        cropNameDropdown.innerHTML = ''; // Clear previous options
+        cropNameDropdown.innerHTML = '<option value="">Select crop name</option>'; // Reset dropdown
+        if (category) {
+            cropData[category].forEach(function(crop) {
+                var option = document.createElement('option');
+                option.value = crop.name;
+                option.textContent = crop.name + ' (' + crop.season + ')';
+                option.classList.add('dropdown-option'); // Add animation class
+                cropNameDropdown.appendChild(option);
+            });
+            cropNameDropdown.disabled = false; // Enable crop name dropdown
+        } else {
+            cropNameDropdown.disabled = true; // Disable crop name dropdown if no category is selected
+        }
+    });
+
+    function validateInputs() {
+        var cost = document.getElementById('cost').value;
+        var yieldFactor = document.getElementById('yield').value;
+        var premium = document.getElementById('premium').value;
+
+        // Clear previous error messages
+        document.getElementById('errorMessage').innerHTML = '';
+        document.getElementById('costError').innerHTML = '';
+        document.getElementById('yieldError').innerHTML = '';
+        document.getElementById('premiumError').innerHTML = '';
+
+        // Validate cost
+        if (isNaN(cost) || cost.trim() === '' || parseFloat(cost) < 0) {
+            document.getElementById('costError').innerHTML = 'Please enter a valid positive cost.';
+            return false;
+        }
+
+        // Validate yield factor
+        if (isNaN(yieldFactor) || yieldFactor.trim() === '' || parseFloat(yieldFactor) < 0) {
+            document.getElementById('yieldError').innerHTML = 'Please enter a valid positive yield factor.';
+            return false;
+        }
+
+        // Validate premium
+        if (isNaN(premium) || premium.trim() === '' || parseFloat(premium) < 0) {
+            document.getElementById('premiumError').innerHTML = 'Please enter a valid positive premium.';
+            return false;
+        }
+
+        return true;
+    }
+
+    function calculateMSP() {
+        // Validate inputs
+        if (!validateInputs()) {
+            return;
+        }
+
+        var cost = parseFloat(document.getElementById('cost').value);
+        var yieldFactor = parseFloat(document.getElementById('yield').value);
+        var premium = parseFloat(document.getElementById('premium').value);
+
+        var msp = (cost + yieldFactor) * (1 + premium / 100);
+
+        // Display success message with animation
+        var mspResult = document.getElementById('mspResult');
+        mspResult.innerHTML = '<p>Minimum Support Price (MSP) in Rupees: <strong>' + msp.toFixed(2) + '</strong></p>';
+        mspResult.classList.add('text-success');
+        setTimeout(function() {
+            mspResult.classList.remove('text-success');
+        }, 2000); // Remove success color after 2 seconds
+
+        // Clear inputs and error message
+        document.getElementById('cost').value = '';
+        document.getElementById('yield').value = '';
+        document.getElementById('premium').value = '';
+        document.getElementById('errorMessage').innerHTML = '';
+    }
+
+    document.getElementById('mspForm').addEventListener('submit', function(event) {
+        event.preventDefault(); // Prevent form submission
+        calculateMSP(); // Call calculateMSP function
+    });
+
+    // Real-time validation for cost input
+    document.getElementById('cost').addEventListener('input', function() {
+        var cost = this.value.trim();
+        var costError = document.getElementById('costError');
+        if (cost === '' || isNaN(cost) || parseFloat(cost) < 0) {
+            costError.innerHTML = 'Please enter a valid positive cost.';
+        } else {
+            costError.innerHTML = '';
+        }
+    });
+
+    // Real-time validation for yield input
+    document.getElementById('yield').addEventListener('input', function() {
+        var yieldFactor = this.value.trim();
+        var yieldError = document.getElementById('yieldError');
+        if (yieldFactor === '' || isNaN(yieldFactor) || parseFloat(yieldFactor) < 0) {
+            yieldError.innerHTML = 'Please enter a valid positive yield factor.';
+        } else {
+            yieldError.innerHTML = '';
+        }
+    });
+
+    // Real-time validation for premium input
+    document.getElementById('premium').addEventListener('input', function() {
+        var premium = this.value.trim();
+        var premiumError = document.getElementById('premiumError');
+        if (premium === '' || isNaN(premium) || parseFloat(premium) < 0) {
+            premiumError.innerHTML = 'Please enter a valid positive premium.';
+        } else {
+            premiumError.innerHTML = '';
+        }
+    });
+
+    // Set aria-describedby and aria-invalid attributes for inputs
+    var inputs = document.querySelectorAll('input');
+    inputs.forEach(function(input) {
+        input.addEventListener('input', function() {
+            var errorId = this.id + 'Error';
+            var errorDiv = document.getElementById(errorId);
+            if (errorDiv.innerHTML.trim() !== '') {
+                this.setAttribute('aria-describedby', errorId);
+                this.setAttribute('aria-invalid', 'true');
+            } else {
+                this.removeAttribute('aria-describedby');
+                this.removeAttribute('aria-invalid');
+            }
+        });
+    });
+</script>
+</body>
+</html>
